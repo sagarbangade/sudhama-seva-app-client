@@ -1,29 +1,57 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
+import { PaperProvider } from 'react-native-paper';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { useEffect } from 'react';
+import { router, useSegments, useRouter } from 'expo-router';
+import { ThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { StatusBar } from 'expo-status-bar';
+import { BottomNavigation, Text } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Slot } from 'expo-router';
+import { theme } from '../constants/theme';
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+function RootLayoutNav() {
+  const { user, initialized } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
 
-  if (!loaded) {
-    // Async font loading only occurs in development.
+  useEffect(() => {
+    if (!initialized) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!user && !inAuthGroup) {
+      // Redirect to the login page if not signed in
+      router.replace('/(auth)/login');
+    } else if (user && inAuthGroup) {
+      // Redirect to the home page if signed in
+      router.replace('/(app)');
+    }
+  }, [user, initialized, segments]);
+
+  if (!initialized) {
     return null;
   }
 
+  if (!user) {
+    return <Slot />;
+  }
+
+  return <Slot />;
+}
+
+export default function RootLayout() {
+  const colorScheme = useColorScheme();
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <PaperProvider theme={theme}>
+      <AuthProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <RootLayoutNav />
+          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+        </ThemeProvider>
+      </AuthProvider>
+    </PaperProvider>
   );
 }
