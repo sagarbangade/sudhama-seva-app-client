@@ -1,9 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
-import { Text, Card, Searchbar, FAB, Portal, Dialog, Button, ActivityIndicator } from 'react-native-paper';
+import { View, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native';
+import { Text, Card, Searchbar, FAB, Portal, Dialog, Button, ActivityIndicator, TextInput } from 'react-native-paper';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { donorService, Donor, DonorFilters } from '../../../services/donorService';
+import { donationService } from '../../../services/donationService';
 import { DonorForm } from '../../../components/DonorForm';
+import { DonorCard } from '../../../components/DonorCard';
+import { colors } from '../../../constants/theme';
 
 export default function DonorsScreen() {
   const router = useRouter();
@@ -13,6 +16,11 @@ export default function DonorsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showCollectModal, setShowCollectModal] = useState(false);
+  const [selectedDonorId, setSelectedDonorId] = useState<string | null>(null);
+  const [amount, setAmount] = useState('');
+  const [notes, setNotes] = useState('');
+  const [collecting, setCollecting] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
     total: 0,
@@ -65,23 +73,43 @@ export default function DonorsScreen() {
     }
   };
 
+  const handleCollect = (donorId: string) => {
+    setSelectedDonorId(donorId);
+    setShowCollectModal(true);
+  };
+
+  const handleConfirmCollection = async () => {
+    if (!selectedDonorId) return;
+
+    try {
+      setCollecting(true);
+      const currentDate = new Date();
+      await donationService.createDonation({
+        donorId: selectedDonorId,
+        amount: parseFloat(amount),
+        collectionDate: currentDate.toISOString(),
+        status: 'collected',
+        notes: notes.trim() || undefined
+      });
+      setShowCollectModal(false);
+      setAmount('');
+      setNotes('');
+      setSelectedDonorId(null);
+      Alert.alert('Success', 'Donation collected successfully');
+    } catch (error) {
+      console.error('Error collecting donation:', error);
+      Alert.alert('Error', 'Failed to collect donation');
+    } finally {
+      setCollecting(false);
+    }
+  };
+
   const renderDonorCard = ({ item }: { item: Donor }) => (
-    <Card
-      style={styles.card}
+    <DonorCard
+      donor={item}
       onPress={() => router.push(`/donors/${item._id}`)}
-    >
-      <Card.Content>
-        <Text variant="titleMedium">{item.name}</Text>
-        <Text variant="bodyMedium">Hundi No: {item.hundiNo}</Text>
-        <Text variant="bodyMedium">Mobile: {item.mobileNumber}</Text>
-        <Text variant="bodyMedium" numberOfLines={2}>
-          Address: {item.address}
-        </Text>
-        <Text variant="bodySmall" style={styles.date}>
-          Date: {new Date(item.date).toLocaleDateString()}
-        </Text>
-      </Card.Content>
-    </Card>
+      onCollect={() => handleCollect(item._id)}
+    />
   );
 
   if (loading) {
@@ -122,6 +150,39 @@ export default function DonorsScreen() {
           <Dialog.Content>
             <DonorForm onSubmit={handleAddDonor} isLoading={submitting} />
           </Dialog.Content>
+        </Dialog>
+
+        <Dialog visible={showCollectModal} onDismiss={() => setShowCollectModal(false)}>
+          <Dialog.Title>Collect Donation</Dialog.Title>
+          <Dialog.Content>
+            <TextInput
+              label="Amount"
+              value={amount}
+              onChangeText={setAmount}
+              keyboardType="numeric"
+              mode="outlined"
+              style={styles.input}
+            />
+            <TextInput
+              label="Notes (optional)"
+              value={notes}
+              onChangeText={setNotes}
+              mode="outlined"
+              style={styles.input}
+              multiline
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setShowCollectModal(false)}>Cancel</Button>
+            <Button
+              mode="contained"
+              onPress={handleConfirmCollection}
+              loading={collecting}
+              disabled={collecting || !amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0}
+            >
+              Collect
+            </Button>
+          </Dialog.Actions>
         </Dialog>
       </Portal>
 
@@ -171,4 +232,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-}); 
+  input: {
+    marginBottom: 16,
+    backgroundColor: colors.background,
+  },
+});

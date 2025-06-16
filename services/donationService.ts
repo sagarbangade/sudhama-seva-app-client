@@ -21,14 +21,19 @@ export interface Donation {
   updatedAt: string;
 }
 
-export interface MonthlyStatus {
-  year: number;
-  month: number;
-  totalDonors: number;
+export interface MonthlyStats {
+  total: number;
   collected: number;
   pending: number;
   skipped: number;
-  statusReport: {
+  totalAmount: number;
+}
+
+export interface MonthlyStatus {
+  year: number;
+  month: number;
+  stats: MonthlyStats;
+  statusReport: Array<{
     donor: {
       id: string;
       name: string;
@@ -36,7 +41,7 @@ export interface MonthlyStatus {
     };
     status: 'pending' | 'collected' | 'skipped';
     donation: Donation | null;
-  }[];
+  }>;
 }
 
 class DonationService {
@@ -72,7 +77,7 @@ class DonationService {
     try {
       const queryParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
-        if (value) queryParams.append(key, value.toString());
+        if (value !== undefined) queryParams.append(key, value.toString());
       });
 
       const response = await apiService.get<{
@@ -92,9 +97,11 @@ class DonationService {
 
   async getMonthlyStatus(year: number, month: number): Promise<MonthlyStatus> {
     try {
+      console.log('Fetching monthly status:', { year, month });
       const response = await apiService.get<{ success: boolean; data: MonthlyStatus }>(
         `${this.baseUrl}/monthly-status?year=${year}&month=${month}`
       );
+      console.log('Monthly status response:', response);
       return response.data;
     } catch (error) {
       console.error('Error fetching monthly status:', error);
@@ -127,6 +134,15 @@ class DonationService {
       await apiService.delete(`${this.baseUrl}/${id}`);
     } catch (error) {
       console.error('Error deleting donation:', error);
+      throw error;
+    }
+  }
+
+  async initializeMonthlyDonations(): Promise<void> {
+    try {
+      await apiService.post(`${this.baseUrl}/initialize-monthly`, {});
+    } catch (error) {
+      console.error('Error initializing monthly donations:', error);
       throw error;
     }
   }

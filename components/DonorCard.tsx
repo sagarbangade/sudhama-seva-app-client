@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Pressable } from 'react-native';
-import { Card, Text, List } from 'react-native-paper';
+import { Card, Text, List, Button } from 'react-native-paper';
 import { colors } from '../constants/theme';
 import { Donor } from '../services/donorService';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -9,9 +9,10 @@ import * as Linking from 'expo-linking';
 interface DonorCardProps {
   donor: Donor;
   onPress: () => void;
+  onCollect?: () => void;
 }
 
-export function DonorCard({ donor, onPress }: DonorCardProps) {
+export function DonorCard({ donor, onPress, onCollect }: DonorCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   console.log('DonorCard rendering with donor:', { id: donor._id, name: donor.name });
@@ -98,9 +99,24 @@ export function DonorCard({ donor, onPress }: DonorCardProps) {
             </Pressable>
           )}
 
-          <Pressable onPress={onPress} style={styles.detailsButton}>
-            <Text variant="bodyMedium" style={styles.detailsText}>View Full Details</Text>
-          </Pressable>
+          <View style={styles.buttonRow}>
+            <Button
+              mode="contained"
+              onPress={onCollect}
+              icon="cash"
+              style={styles.collectButton}
+            >
+              Collect Donation
+            </Button>
+            <Button
+              mode="outlined"
+              onPress={onPress}
+              icon="information"
+              style={styles.detailsButton}
+            >
+              Details
+            </Button>
+          </View>
         </Card.Content>
       </List.Accordion>
     </Card>
@@ -181,12 +197,19 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '500',
   },
-  detailsButton: {
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: 16,
-    padding: 12,
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    alignItems: 'center',
+    gap: 8,
+  },
+  collectButton: {
+    flex: 1,
+    backgroundColor: colors.success,
+  },
+  detailsButton: {
+    flex: 1,
+    borderColor: colors.primary,
   },
   detailsText: {
     color: colors.white,

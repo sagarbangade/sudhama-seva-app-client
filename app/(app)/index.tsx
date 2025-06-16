@@ -178,6 +178,19 @@ export default function HomeScreen() {
         />
       </View>
 
+      <View style={styles.headerActions}>
+        <Button
+          mode="contained"
+          onPress={() => router.push('/(app)/donations/monthly')}
+          icon={({ size, color }) => (
+            <MaterialCommunityIcons name="calendar-check" size={size} color={color} />
+          )}
+          style={styles.monthlyButton}
+        >
+          Monthly Donations
+        </Button>
+      </View>
+
       <FlatList
         data={donors}
         renderItem={({ item }) => (
@@ -293,6 +306,14 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: 'rgba(0,0,0,0.05)',
     borderRadius: 20,
+  },
+  headerActions: {
+    padding: 16,
+    paddingTop: 0,
+  },
+  monthlyButton: {
+    backgroundColor: colors.primary,
+    marginBottom: 16,
   },
   listContent: {
     padding: 16,
