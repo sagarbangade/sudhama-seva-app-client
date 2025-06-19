@@ -185,9 +185,19 @@ export default function HomeScreen() {
           icon={({ size, color }) => (
             <MaterialCommunityIcons name="calendar-check" size={size} color={color} />
           )}
-          style={styles.monthlyButton}
+          style={styles.actionButton}
         >
           Monthly Donations
+        </Button>
+        <Button
+          mode="contained"
+          onPress={() => router.push('/(app)/groups')}
+          icon={({ size, color }) => (
+            <MaterialCommunityIcons name="account-group" size={size} color={color} />
+          )}
+          style={[styles.actionButton, { backgroundColor: colors.secondary }]}
+        >
+          Manage Groups
         </Button>
       </View>
 
@@ -310,6 +320,10 @@ const styles = StyleSheet.create({
   headerActions: {
     padding: 16,
     paddingTop: 0,
+    gap: 8,
+  },
+  actionButton: {
+    width: '100%',
   },
   monthlyButton: {
     backgroundColor: colors.primary,

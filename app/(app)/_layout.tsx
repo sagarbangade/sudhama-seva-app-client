@@ -14,6 +14,20 @@ export default function AppLayout() {
           presentation: 'card'
         }}
       />
+      <Stack.Screen
+        name="groups/index"
+        options={{
+          title: 'Groups',
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="groups/[id]"
+        options={{
+          title: 'Group Details',
+          headerShown: false
+        }}
+      />
     </Stack>
   );
 }
